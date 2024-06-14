@@ -21,6 +21,7 @@ public class ProductService {
         return productRepository.findById(id).orElseThrow();
     }
 
+    @Transactional
     public Product createProduct(Product product) {
         return productRepository.save(product);
     }

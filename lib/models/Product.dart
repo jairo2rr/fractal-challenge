@@ -17,7 +17,7 @@ class Product {
       id: json['id'],
       name: json['name'],
       price: json['price'].toDouble(),
-      productStatus: json['productState'],
+      productStatus: json['productStatus'],
     );
   }
 

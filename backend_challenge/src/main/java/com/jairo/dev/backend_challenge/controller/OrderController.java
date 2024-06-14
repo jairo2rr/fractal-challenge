@@ -35,7 +35,7 @@ public class OrderController {
 
     @PutMapping("/order")
     public ResponseEntity<Order> updateOrder(@RequestBody Order order) {
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(orderService.updateOrder(order));
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)

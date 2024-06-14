@@ -34,8 +34,9 @@ class _OrderListScreenState extends State<OrderListScreen> {
         children: [
           FloatingActionButton(
             heroTag: "Add/Edit order",
-            onPressed: (){
-              navigateToAddScreen(id:null);
+            onPressed: () async {
+              await navigateToAddScreen(id:null);
+              _executeOnReturn();
             },
             child: Icon(Icons.plus_one),
           ),
@@ -89,9 +90,9 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  void navigateToAddScreen({int? id}) {
+  Future<void> navigateToAddScreen({int? id}) async {
     final route = MaterialPageRoute(builder: (context) => AddEditOrderScreen(orderId: id));
-    Navigator.push(context, route);
+    await Navigator.push(context, route);
   }
 
   void navigateToProductScreen(){
@@ -122,4 +123,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
   }
 
   void showDeleteConfirmationDialog(int? id) {}
+  void _executeOnReturn(){
+    loadAllOrders();
+  }
 }

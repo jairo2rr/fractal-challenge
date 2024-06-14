@@ -1,5 +1,6 @@
 package com.jairo.dev.backend_challenge.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long orderNumber;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss.SSSSSS")
     private LocalDateTime orderDate;
     private String orderStatus;
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, targetEntity = OrderDetail.class)

@@ -1,12 +1,14 @@
+import 'package:fractal_challenge/models/Product.dart';
+
 class Order {
   final int? id;
   final int orderNumber;
   final DateTime orderDate;
-  final String orderStatus;
+  final OrderStatus orderStatus;
   final List<OrderDetail> orderDetails;
 
   Order({
-    required this.id,
+    this.id,
     required this.orderNumber,
     required this.orderDate,
     required this.orderStatus,
@@ -23,34 +25,61 @@ class Order {
       id: json['id'],
       orderNumber: json['orderNumber'],
       orderDate: DateTime.parse(json['orderDate']),
-      orderStatus: json['orderStatus'],
+      orderStatus: OrderStatus.values.firstWhere((element) => element.name == json['orderStatus']),
       orderDetails: details,
     );
+  }
+  Map<String, dynamic> toJson(){
+    final response = {
+      "id":id ?? "",
+      "orderNumber": orderNumber.toString(),
+      "orderDate": orderDate.toString(),
+      "orderStatus": orderStatus.name,
+      "orderDetails": orderDetails.map((detail) => detail.toJson()).toList(),
+    };
+    print(response);
+    return response;
   }
 }
 
 class OrderDetail {
   final int? id;
-  final int productId;
-  final String productName;
+  final int product;
+  final Product? productObject;
   final int quantity;
-  final double unitPrice;
+  final double totalPrice;
 
   OrderDetail({
-    required this.id,
-    required this.productId,
-    required this.productName,
+    this.id,
+    required this.product,
+    this.productObject,
     required this.quantity,
-    required this.unitPrice,
+    required this.totalPrice,
   });
 
   factory OrderDetail.fromJson(Map<String, dynamic> json) {
+    Product product=Product.fromJson(json['product']);
     return OrderDetail(
       id: json['id'],
-      productId: json['productId'],
-      productName: json['productName'],
+      product: product.id!,
+      productObject: product,
       quantity: json['quantity'],
-      unitPrice: json['unitPrice'].toDouble(),
+      totalPrice: json['totalPrice'].toDouble(),
     );
   }
+
+  Map<String, dynamic> toJson(){
+    return {
+      "id":id??"",
+      "product": productObject?.toJson() ?? "",
+      "quantity":quantity.toString(),
+      "totalPrice": (productObject?.price ?? 0 * quantity).toString()
+    };
+  }
+}
+
+enum OrderStatus {
+  Pending,
+  InProgress,
+  Completed
 }
