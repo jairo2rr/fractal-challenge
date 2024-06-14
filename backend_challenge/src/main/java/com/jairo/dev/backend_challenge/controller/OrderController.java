@@ -29,12 +29,12 @@ public class OrderController {
     }
 
     @PostMapping("/order")
-    public ResponseEntity<Order> createOrder(Order order) {
+    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
         return new ResponseEntity<>(orderService.saveOrder(order), HttpStatus.CREATED);
     }
 
     @PutMapping("/order")
-    public ResponseEntity<Order> updateOrder(Long id, Order order) {
+    public ResponseEntity<Order> updateOrder(@RequestBody Order order) {
         return ResponseEntity.ok(null);
     }
 

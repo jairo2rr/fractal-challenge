@@ -19,5 +19,5 @@ public class Product {
     private Long id;
     private String name;
     private Float price;
-    private Integer state;
+    private Integer productStatus;
 }

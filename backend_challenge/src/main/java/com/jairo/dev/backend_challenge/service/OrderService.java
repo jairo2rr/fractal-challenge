@@ -28,7 +28,7 @@ public class OrderService {
         Order orderFound = orderRepository.findById(order.getId()).orElseThrow();
         orderFound.setOrderDetails(order.getOrderDetails());
         orderFound.setOrderStatus(order.getOrderStatus());
-        orderFound.setNOrder(order.getNOrder());
+        orderFound.setOrderNumber(order.getOrderNumber());
         return orderRepository.save(order);
     }
 

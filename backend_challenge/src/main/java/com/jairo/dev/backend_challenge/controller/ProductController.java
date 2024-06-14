@@ -19,28 +19,28 @@ public class ProductController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/products")
-    public ResponseEntity<List<Product>> getOrders() {
+    public ResponseEntity<List<Product>> getProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
     @GetMapping("/product/{id}")
-    public ResponseEntity<Product> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
         return new ResponseEntity<>(productService.getProductById(id), HttpStatus.CREATED);
     }
 
     @PostMapping("/product")
-    public ResponseEntity<Product> createOrder(Product product) {
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
         return new ResponseEntity<>(productService.createProduct(product), HttpStatus.CREATED);
     }
 
     @PutMapping("/product")
-    public ResponseEntity<Product> updateOrder(Product product) {
+    public ResponseEntity<Product> updateProduct(@RequestBody Product product) {
         return ResponseEntity.ok(productService.updateProduct(product));
     }
 
     @ResponseStatus(HttpStatus.ACCEPTED)
     @DeleteMapping("/product/{id}")
-    public void deleteOrder(@PathVariable Long id) {
+    public void deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
     }
 }

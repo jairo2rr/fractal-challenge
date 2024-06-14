@@ -30,7 +30,7 @@ public class ProductService {
         Product productFound = productRepository.findById(product.getId()).orElseThrow();
         productFound.setName(product.getName());
         productFound.setPrice(product.getPrice());
-        productFound.setState(product.getState());
+        productFound.setProductStatus(product.getProductStatus());
         return productRepository.save(productFound);
     }
 

@@ -12,14 +12,15 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long nOrder;
+    private Long orderNumber;
     private LocalDateTime orderDate;
     private String orderStatus;
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, targetEntity = OrderDetail.class)
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, targetEntity = OrderDetail.class)
     @JoinColumn(name = "order_id",referencedColumnName = "id")
     private List<OrderDetail> orderDetails;
 }
