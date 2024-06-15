@@ -1,4 +1,5 @@
 import 'package:fractal_challenge/models/Product.dart';
+import 'package:intl/intl.dart';
 
 class Order {
   final int? id;
@@ -30,6 +31,9 @@ class Order {
     );
   }
   Map<String, dynamic> toJson(){
+    // DateFormat formatter = DateFormat('yyyy-MM-dd');
+    // String formattedDate = formatter.format(orderDate);
+
     final response = {
       "id":id ?? "",
       "orderNumber": orderNumber.toString(),
@@ -46,8 +50,8 @@ class OrderDetail {
   final int? id;
   final int product;
   final Product? productObject;
-  final int quantity;
-  final double totalPrice;
+  int quantity;
+  double totalPrice;
 
   OrderDetail({
     this.id,
@@ -71,10 +75,20 @@ class OrderDetail {
   Map<String, dynamic> toJson(){
     return {
       "id":id??"",
-      "product": productObject?.toJson() ?? "",
+      "product": productObject?.toJson(),
       "quantity":quantity.toString(),
       "totalPrice": (productObject?.price ?? 0 * quantity).toString()
     };
+  }
+
+  int get _quantity => quantity;
+  set _quantity(int value){
+    quantity = _quantity;
+  }
+
+  double get _totalPrice => totalPrice;
+  set _totalPrice(double value){
+    totalPrice = _totalPrice;
   }
 }
 

@@ -53,7 +53,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     );
   }
 
-  void submitProduct() async {
+  Future<void> submitProduct() async {
     final apiUrl = "http://10.0.2.2:8093/api/v1/product";
     final uri = Uri.parse(apiUrl);
     final product = Product(name: nameController.text,price: double.tryParse(priceController.text) ?? 0.0, productStatus: (statusActive)?1:0 );

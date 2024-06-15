@@ -1,6 +1,7 @@
 package com.jairo.dev.backend_challenge.controller;
 
 import com.jairo.dev.backend_challenge.model.Order;
+import com.jairo.dev.backend_challenge.model.dto.OrderDTO;
 import com.jairo.dev.backend_challenge.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,22 +20,22 @@ public class OrderController {
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/orders")
-    public ResponseEntity<List<Order>> getOrders() {
+    public ResponseEntity<List<OrderDTO>> getOrders() {
         return ResponseEntity.ok(orderService.findAllOrders());
     }
 
     @GetMapping("/order/{id}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Long id) {
-        return new ResponseEntity<>(orderService.findOrderById(id), HttpStatus.CREATED);
+    public ResponseEntity<OrderDTO> getOrderById(@PathVariable Long id) {
+        return new ResponseEntity<>(orderService.findOrderById(id), HttpStatus.OK);
     }
 
     @PostMapping("/order")
-    public ResponseEntity<Order> createOrder(@RequestBody Order order) {
-        return new ResponseEntity<>(orderService.saveOrder(order), HttpStatus.CREATED);
+    public ResponseEntity<OrderDTO> createOrder(@RequestBody OrderDTO orderDTO) {
+        return new ResponseEntity<>(orderService.saveOrder(orderDTO), HttpStatus.CREATED);
     }
 
     @PutMapping("/order")
-    public ResponseEntity<Order> updateOrder(@RequestBody Order order) {
+    public ResponseEntity<OrderDTO> updateOrder(@RequestBody OrderDTO order) {
         return ResponseEntity.ok(orderService.updateOrder(order));
     }
 
