@@ -1,4 +1,4 @@
-import 'package:fractal_challenge/models/Product.dart';
+import 'package:fractal_challenge/models/product.dart';
 import 'package:intl/intl.dart';
 
 class Order {

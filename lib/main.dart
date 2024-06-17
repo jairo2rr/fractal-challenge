@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:fractal_challenge/screens/order_list.dart';
+import 'package:fractal_challenge/models/navigation/routes.dart';
+import 'package:fractal_challenge/utils/utils.dart';
+import 'package:get/get.dart';
 
-void main() {
+void main() async{
+  await registerServices();
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       theme: ThemeData.light(),
-      home: OrderListScreen(),
+      initialRoute: RoutesClass.home,
+      getPages: RoutesClass.routes,
       debugShowCheckedModeBanner: false,
     );
   }

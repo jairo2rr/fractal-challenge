@@ -2,16 +2,16 @@ import 'dart:convert';
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
-import 'package:fractal_challenge/models/Order.dart';
-import 'package:fractal_challenge/utils/SnackBarMessage.dart';
+import 'package:fractal_challenge/models/order.dart';
+import 'package:fractal_challenge/services/http_service.dart';
+import 'package:fractal_challenge/utils/snackbar_message.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
-import 'package:fractal_challenge/models/Product.dart';
-import 'package:fractal_challenge/models/Order.dart';
+import 'package:fractal_challenge/models/product.dart';
+import 'package:fractal_challenge/models/order.dart';
 
 class AddEditOrderScreen extends StatefulWidget {
-  final int? orderId;
-
-  const AddEditOrderScreen({this.orderId, super.key});
+  const AddEditOrderScreen({super.key});
 
   @override
   State<AddEditOrderScreen> createState() => _AddEditOrderScreenState();
@@ -30,13 +30,16 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
   List<OrderDetail> orderDetails = [];
   Order? _orderFound;
 
+  HttpService httpService = Get.find<HttpService>();
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _getAllProducts();
-
-    idOrder = widget.orderId;
+    idOrder = (Get.parameters['id'] !=null && int.parse(Get.parameters['id']!) != 0)
+        ? int.parse(Get.parameters['id']!)
+        : null;
     if (idOrder != null) {
       titleModule = "Edit";
       _getOrderById(idOrder!);
@@ -54,42 +57,42 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
         title: Text("$titleModule Order"),
       ),
       body: ListView(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         children: [
           TextField(
             controller: numberOrderController,
-            decoration: InputDecoration(hintText: "Order #"),
+            decoration: const InputDecoration(hintText: "Order #"),
           ),
           TextField(
             controller: dateOrderController,
             enabled: false,
-            decoration: InputDecoration(hintText: "Date"),
+            decoration: const InputDecoration(hintText: "Date"),
           ),
           TextField(
             controller: numberProductsController,
             enabled: false,
-            decoration: InputDecoration(hintText: "# Products"),
+            decoration: const InputDecoration(hintText: "# Products"),
           ),
           TextField(
             controller: finalPriceController,
             enabled: false,
-            decoration: InputDecoration(hintText: "Final Price"),
+            decoration: const InputDecoration(hintText: "Final Price"),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const Text("Products", style: TextStyle(fontSize: 20)),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               FilledButton(
                   onPressed: _showModalAddProduct,
-                  child: Row(children: [Icon(Icons.plus_one)]))
+                  child: const Row(children: [Icon(Icons.plus_one)]))
             ],
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
-              columns: [
+              columns: const [
                 DataColumn(label: Text('ID')),
                 DataColumn(label: Text('Name')),
                 DataColumn(label: Text('P.Unit')),
@@ -111,13 +114,15 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
                   DataCell(Row(
                     children: [
                       IconButton(
-                        icon: Icon(Icons.edit),
+                        icon: const Icon(Icons.edit),
                         onPressed: () {
-                          _showModalAddProduct(productToEdit: productFound, quantity: entry.value);
+                          _showModalAddProduct(
+                              productToEdit: productFound,
+                              quantity: entry.value);
                         },
                       ),
                       IconButton(
-                        icon: Icon(Icons.delete),
+                        icon: const Icon(Icons.delete),
                         onPressed: () {
                           _deleteProductFromOrder(productFound);
                         },
@@ -129,50 +134,38 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
             ),
           ),
           OutlinedButton(
-              onPressed: submitOrder, child: Text("$titleModule Order"))
+              onPressed: _submitOrder, child: Text("$titleModule Order"))
         ],
       ),
     );
   }
 
-  Future<void> submitOrder() async {
-    final numberOrder = int.parse(numberOrderController.text);
-
-    final apiUrl = "http://10.0.2.2:8093/api/v1/order";
-    final apiUri = Uri.parse(apiUrl);
-    if (idOrder != null) {
-      final order = Order(
-          id: idOrder,
-          orderNumber: numberOrder,
-          orderDate: DateTime.now(),
-          orderStatus: OrderStatus.Pending,
-          orderDetails: orderDetails);
-      final response = await http.put(apiUri,
-          body: json.encode(order.toJson()),
-          headers: {'Content-Type': 'application/json'});
+  Future<void> _submitOrder() async {
+    final response = await httpService.createOrUpdateOrder(
+        idOrder: idOrder,
+        numberOrder: int.parse(numberOrderController.text),
+        orderDetails: orderDetails);
+    if (response.statusCode == 201) {
+      showMessage(context: context, message: "Order was created successfully!");
+      Get.back();
+    } else if (response.statusCode == 200) {
+      showMessage(context: context, message: "Order was updated successfully!");
+      Get.back();
     } else {
-      final order = Order(
-          orderNumber: numberOrder,
-          orderDate: DateTime.now(),
-          orderStatus: OrderStatus.Pending,
-          orderDetails: orderDetails);
-      final response = await http.post(apiUri,
-          body: json.encode(order.toJson()),
-          headers: {'Content-Type': 'application/json'});
+      showMessage(
+          context: context,
+          message: "Error occurs during list orders.",
+          errorCode: response.statusCode);
     }
   }
 
   Future<void> _getAllProducts() async {
-    final apiUrl = "http://10.0.2.2:8093/api/v1/products";
-    final apiUri = Uri.parse(apiUrl);
-    final response =
-        await http.get(apiUri, headers: {'Content-Type': 'application/json'});
+    final response = await httpService.getProducts();
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       setState(() {
         products = data.map((item) => Product.fromJson(item)).toList();
       });
-      print("Products listed successfully!");
     }
   }
 
@@ -180,7 +173,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
     TextEditingController quantityController = TextEditingController();
     Product? productSelected = productToEdit;
 
-    if(productToEdit!=null){
+    if (productToEdit != null) {
       quantityController.text = quantity.toString();
     }
 
@@ -209,21 +202,26 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
                         child: Text(product.name),
                       );
                     }).toList(),
-                    hint: Text("Select a product"),
+                    hint: const Text("Select a product"),
                   ),
                   TextField(
                       controller: quantityController,
-                      decoration: InputDecoration(label: Text("Quantity")),
+                      decoration:
+                          const InputDecoration(label: Text("Quantity")),
                       keyboardType: TextInputType.number),
-                  SizedBox(height: 20.0),
+                  const SizedBox(height: 20.0),
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _updateProductsToOrder(key: productSelected!.id!, value: int.parse(quantityController.text));
+                        _updateProductsToOrder(
+                            key: productSelected!.id!,
+                            value: int.parse(quantityController.text),
+                          toEdit: productToEdit != null
+                        );
                       });
                       Navigator.of(context).pop();
                     },
-                    child: Text('Add/Edit'),
+                    child: const Text('Add/Edit'),
                   ),
                 ],
               ),
@@ -234,34 +232,38 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
     );
   }
 
-  void _updateProductsToOrder({required int key, required int value}){
+  void _updateProductsToOrder({required int key, required int value, required bool toEdit}) {
     setState(() {
       productsToOrder[key] = value;
-      Product productFound = products.firstWhere((product) => product.id == key);
+      Product productFound =
+          products.firstWhere((product) => product.id == key);
       final totalPrice = value * productFound.price;
-      OrderDetail detailFound = orderDetails.firstWhere((detail) => detail.product == key);
-      detailFound.quantity = value;
-      detailFound.totalPrice = totalPrice;
+      if(toEdit){
+        OrderDetail detailFound =
+        orderDetails.firstWhere((detail) => detail.product == key);
+        detailFound.quantity = value;
+        detailFound.totalPrice = totalPrice;
+        return;
+      }
 
+      OrderDetail newDetail = OrderDetail(product: productFound.id!, quantity: value, totalPrice: totalPrice, productObject: productFound);
+      orderDetails.add(newDetail);
       _updateFinalPrice();
     });
   }
 
-  void _updateFinalPrice(){
+  void _updateFinalPrice() {
     double finalPrice = 0;
-    for(OrderDetail detail in orderDetails){
+    for (OrderDetail detail in orderDetails) {
       finalPrice += detail.totalPrice;
     }
-    finalPriceController.text = "S/. $finalPrice";
-
+    setState(() {
+      finalPriceController.text = "S/. $finalPrice";
+    });
   }
 
   Future<void> _getOrderById(int idOrder) async {
-    final apiUrl = "http://10.0.2.2:8093/api/v1/order/$idOrder";
-    final apiUri = Uri.parse(apiUrl);
-    final response =
-        await http.get(apiUri, headers: {'Content-Type': 'application/json'});
-    print(response.statusCode);
+    final response = await httpService.getOrderById(idOrder: idOrder);
     if (response.statusCode == 200) {
       dynamic data = json.decode(response.body);
       setState(() {
@@ -285,6 +287,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
   void _deleteProductFromOrder(Product productFound) {
     setState(() {
       productsToOrder.remove(productFound.id!);
+      orderDetails.removeWhere((detail) => detail.product == productFound.id);
     });
   }
 }

@@ -1,56 +1,75 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:fractal_challenge/screens/add_edit_order.dart';
-import 'package:fractal_challenge/screens/add_edit_product.dart';
-import 'package:http/http.dart' as http;
-import 'package:fractal_challenge/models/Order.dart';
-import 'package:fractal_challenge/utils/SnackBarMessage.dart';
+import 'package:fractal_challenge/models/navigation/routes.dart';
+import 'package:fractal_challenge/services/http_service.dart';
+import 'package:get/get.dart';
+import 'package:fractal_challenge/models/order.dart';
+import 'package:fractal_challenge/utils/snackbar_message.dart';
+
+class OrderListController extends GetxController {
+  RxBool loading = false.obs;
+}
 
 class OrderListScreen extends StatefulWidget {
-  const OrderListScreen({super.key});
+  OrderListController? controller = Get.put(OrderListController());
+
+  OrderListScreen({this.controller, super.key});
 
   @override
   State<OrderListScreen> createState() => _OrderListScreenState();
 }
 
 class _OrderListScreenState extends State<OrderListScreen> {
-  bool _isLoading = true;
+  OrderListController? _controller;
+  bool _isLoading = false;
   List<Order> _orderList = [];
+  HttpService httpService = Get.find<HttpService>();
 
   @override
   void initState() {
     super.initState();
-
+    _controller = widget.controller;
     loadAllOrders();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Order App")),
+      appBar: AppBar(
+        title: const Text("Order App"),
+        actions: [
+          OutlinedButton(
+              onPressed: () {
+                loadAllOrders();
+              },
+              child: const Icon(Icons.refresh_rounded))
+        ],
+      ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
             heroTag: "Add/Edit order",
             onPressed: () async {
-              await navigateToAddScreen(id:null);
-              _executeOnReturn();
+              final result = await navigateToAddScreen();
+              if (result != null) {
+                _executeOnReturn();
+              }
             },
-            child: Icon(Icons.plus_one),
+            child: const Icon(Icons.plus_one),
           ),
           FloatingActionButton(
             heroTag: "Add/Edit product",
             onPressed: navigateToProductScreen,
-            child: Icon(Icons.plumbing_sharp),
+            child: const Icon(Icons.plumbing_sharp),
           )
         ],
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          columns: [
+          columns: const [
             DataColumn(label: Text('ID')),
             DataColumn(label: Text('Order#')),
             DataColumn(label: Text('Date')),
@@ -71,14 +90,14 @@ class _OrderListScreenState extends State<OrderListScreen> {
                     icon: Icon(Icons.edit),
                     onPressed: () {
                       // Navigate to edit order screen, passing order ID
-                      navigateToAddScreen(id:order.id);
+                      navigateToAddScreen(id: order.id ?? 0);
                     },
                   ),
                   IconButton(
                     icon: Icon(Icons.delete),
                     onPressed: () {
                       // Show confirmation dialog and delete order
-                      showDeleteConfirmationDialog(order.id);
+                      _showDeleteConfirmationDialog(order.id);
                     },
                   ),
                 ],
@@ -90,27 +109,21 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  Future<void> navigateToAddScreen({int? id}) async {
-    final route = MaterialPageRoute(builder: (context) => AddEditOrderScreen(orderId: id));
-    await Navigator.push(context, route);
+  Future<dynamic> navigateToAddScreen({int id = 0}) async {
+    return Get.toNamed("${RoutesClass.addEditOrder}/$id");
   }
 
-  void navigateToProductScreen(){
-    final route = MaterialPageRoute(builder: (context) => AddEditProductScreen());
-    Navigator.push(context, route);
+  Future<dynamic> navigateToProductScreen() async {
+    return Get.toNamed(RoutesClass.addEditProduct);
   }
 
   Future<void> loadAllOrders() async {
-    final apiUrl = "http://10.0.2.2:8093/api/v1/orders";
-    final uri = Uri.parse(apiUrl);
-    final response =
-        await http.get(uri, headers: {'Content-Type': 'application/json'});
+    final response = await httpService.getOrders();
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
       setState(() {
         _orderList = data.map((object) => Order.fromJson(object)).toList();
       });
-      print(_orderList);
       _isLoading = false;
       showMessage(context: context, message: "Order was listed successfully!");
     } else {
@@ -122,8 +135,57 @@ class _OrderListScreenState extends State<OrderListScreen> {
     }
   }
 
-  void showDeleteConfirmationDialog(int? id) {}
-  void _executeOnReturn(){
+  Future<void> _showDeleteConfirmationDialog(int? id) async {
+    Order orderFound = _orderList.firstWhere((order) => order.id == id);
+    return await Get.dialog(_deleteDialog(
+        order: orderFound,
+        onDelete: () {
+          if (Get.isSnackbarOpen) {
+            Get.closeCurrentSnackbar();
+          }
+          loadAllOrders();
+          Get.back();
+        }));
+  }
+
+  void _executeOnReturn() {
     loadAllOrders();
+  }
+
+  Widget _deleteDialog(
+      {required Order order, required void Function() onDelete}) {
+    return Center(
+      child: Material(
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Container(
+            width: Get.width * 0.8,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Are you sure to delete this order?"),
+                const SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FilledButton(
+                        onPressed: () async {
+                          await httpService.deleteOrderById(id: order.id!);
+                          onDelete();
+                        },
+                        child: const Text("Delete")),
+                    const SizedBox(width: 8),
+                    OutlinedButton(
+                        onPressed: () => {Get.back()},
+                        child: const Text("Cancel")),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

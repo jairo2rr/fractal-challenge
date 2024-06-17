@@ -13,6 +13,7 @@ import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import lombok.extern.log4j.Log4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,9 +34,6 @@ import java.util.Optional;
 public class OrderService {
 
     private final ProductRepository productRepository;
-    @PersistenceContext
-    private EntityManager entityManager;
-
     private final OrderRepository orderRepository;
     private final OrderDetailRepository orderDetailRepository;
 
@@ -52,6 +50,11 @@ public class OrderService {
     public OrderDTO saveOrder(OrderDTO orderDTO) {
 
         Order order = new Order();
+
+        Optional<Order> orderFound = orderRepository.findByOrderNumber(orderDTO.getOrderNumber());
+        if(orderFound.isPresent()) {
+            throw new DuplicateKeyException("Order number already exists");
+        }
 
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendPattern("yyyy-MM-dd HH:mm:ss")
